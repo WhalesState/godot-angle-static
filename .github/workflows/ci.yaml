@@ -61,90 +61,45 @@ jobs:
           artifact-path-egl: bin/libEGL.ios.arm64.a
           artifact-path-gles: bin/libGLES.ios.arm64.a
           flags: arch=arm64
-
-        # MinGW/LLVM libs using UCRT
-        - name: 🏁 Windows - MinGW/LLVM (UCRT) x86_64
+        - name: Windows (arch=x86_64)
           platform: windows
-          os: windows-2019
-          artifact-name: godot-angle-static-x86_64-llvm-release
+          os: ubuntu-22.04
+          artifact-name: godot-angle-static-x86_64-windows-release
           artifact-path-angle: bin/libANGLE.windows.x86_64.a
           artifact-path-egl: bin/libEGL.windows.x86_64.a
           artifact-path-gles: bin/libGLES.windows.x86_64.a
           flags: use_mingw=yes arch=x86_64 use_llvm=yes mingw_prefix=$HOME/llvm-mingw
           llvm: yes
 
-        - name: 🏁 Windows - MinGW/LLVM (UCRT) x86_32
+        - name: Windows (arch=x86_32)
           platform: windows
-          os: windows-2019
-          artifact-name: godot-angle-static-x86_32-llvm-release
+          os: ubuntu-22.04
+          artifact-name: godot-angle-static-x86_32-windows-release
           artifact-path-angle: bin/libANGLE.windows.x86_32.a
           artifact-path-egl: bin/libEGL.windows.x86_32.a
           artifact-path-gles: bin/libGLES.windows.x86_32.a
           flags: use_mingw=yes arch=x86_32 use_llvm=yes mingw_prefix=$HOME/llvm-mingw
           llvm: yes
 
-        - name: 🏁 Windows - MinGW/LLVM (UCRT) arm64
+        - name: Windows (arch=arm64)
           platform: windows
-          os: windows-2019
-          artifact-name: godot-angle-static-arm64-llvm-release
+          os: ubuntu-22.04
+          artifact-name: godot-angle-static-arm64-windows-release
           artifact-path-angle: bin/libANGLE.windows.arm64.a
           artifact-path-egl: bin/libEGL.windows.arm64.a
           artifact-path-gles: bin/libGLES.windows.arm64.a
           flags: use_mingw=yes arch=arm64 use_llvm=yes mingw_prefix=$HOME/llvm-mingw
           llvm: yes
 
-        # MSVC libs
-        - name: 🏁 Windows - MSVC x86_64
+        - name: Windows (arch=arm32)
           platform: windows
-          os: windows-2019
-          artifact-name: godot-angle-static-x86_64-msvc-release
-          artifact-path-angle: bin/libANGLE.windows.x86_64.lib
-          artifact-path-egl: bin/libEGL.windows.x86_64.lib
-          artifact-path-gles: bin/libGLES.windows.x86_64.lib
-          flags: use_mingw=no arch=x86_64
-
-        - name: 🏁 Windows - MSVC x86_32
-          platform: windows
-          os: windows-2019
-          artifact-name: godot-angle-static-x86_32-msvc-release
-          artifact-path-angle: bin/libANGLE.windows.x86_32.lib
-          artifact-path-egl: bin/libEGL.windows.x86_32.lib
-          artifact-path-gles: bin/libGLES.windows.x86_32.lib
-          flags: use_mingw=no arch=x86_32
-
-        - name: 🏁 Windows - MSVC arm64
-          platform: windows
-          os: windows-2019
-          artifact-name: godot-angle-static-arm64-msvc-release
-          artifact-path-angle: bin/libANGLE.windows.arm64.lib
-          artifact-path-egl: bin/libEGL.windows.arm64.lib
-          artifact-path-gles: bin/libGLES.windows.arm64.lib
-          flags: use_mingw=no arch=arm64
-
-        # MinGW/GCC libs using MSVCRT
-        - name: 🏁 Windows - MinGW/GCC (MSVCRT) x86_64
-          platform: windows
-          os: windows-2019
-          artifact-name: godot-angle-static-x86_64-gcc-release
-          artifact-path-angle: bin/libANGLE.windows.x86_64.a
-          artifact-path-egl: bin/libEGL.windows.x86_64.a
-          artifact-path-gles: bin/libGLES.windows.x86_64.a
-          flags: use_mingw=yes arch=x86_64
-          mingw: yes
-          msys: mingw64
-          msysenv: x86_64
-
-        - name: 🏁 Windows - MinGW/GCC (MSVCRT) x86_32
-          platform: windows
-          os: windows-2019
-          artifact-name: godot-angle-static-x86_32-gcc-release
-          artifact-path-angle: bin/libANGLE.windows.x86_32.a
-          artifact-path-egl: bin/libEGL.windows.x86_32.a
-          artifact-path-gles: bin/libGLES.windows.x86_32.a
-          flags: use_mingw=yes arch=x86_32
-          mingw: yes
-          msys: mingw32
-          msysenv: i686
+          os: ubuntu-22.04
+          artifact-name: godot-angle-static-arm32-windows-release
+          artifact-path-angle: bin/libANGLE.windows.arm32.a
+          artifact-path-egl: bin/libEGL.windows.arm32.a
+          artifact-path-gles: bin/libGLES.windows.arm32.a
+          flags: use_mingw=yes arch=arm32 use_llvm=yes mingw_prefix=$HOME/llvm-mingw
+        #   arm: true
 
     runs-on: ${{ matrix.os }}
 
@@ -166,7 +121,6 @@ jobs:
         run: sudo xcode-select -switch "${XCODE_DEV_PATH}"
 
       - name: Install SCons (Native env)
-        if: ${{ matrix.mingw != 'yes' }}
         run: |
           python -m pip install scons==4.0.0
 
@@ -174,36 +128,34 @@ jobs:
         run: |
           python -m pip install mako
 
-      - name: Setup MinGW/LLVM
-        if: ${{ matrix.platform == 'windows' && matrix.llvm == 'yes' }}
+      - name: Install llvm-mingw
+        if: ${{ matrix.platform == 'windows' }}
         run: |
-          curl -L -O https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-ucrt-x86_64.zip
-          unzip -q llvm-mingw-*.zip
-          rm llvm-mingw-*.zip
+          curl -LO https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-ucrt-ubuntu-20.04-x86_64.tar.xz && \
+          tar xf llvm-mingw-20240619-ucrt-ubuntu-20.04-x86_64.tar.xz
+          rm -f llvm-mingw-*.xz
           mv llvm-mingw-* "$HOME/llvm-mingw"
           echo "$HOME/llvm-mingw/bin" >> $GITHUB_PATH
 
-      - name: Setup MinGW/MSYS2
-        if: ${{ matrix.mingw == 'yes' }}
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          msystem: ${{matrix.msys}}
-          install: mingw-w64-${{matrix.msysenv}}-gcc mingw-w64-${{matrix.msysenv}}-scons
+      # - name: Download and extract llvm-mingw SDK
+      #   env:
+      #     CURRENT_DIR: ${{ github.workspace }}
+      #   run: |
+      #     mkdir -p "$CURRENT_DIR/sdks"
+      #     cd "$CURRENT_DIR/sdks"
+      #     curl -LO https://github.com/mstorsjo/llvm-mingw/releases/download/20241015/llvm-mingw-20241015-msvcrt-ubuntu-20.04-x86_64.tar.xz
+      #     xz -dc llvm-mingw-20241015-msvcrt-ubuntu-20.04-x86_64.tar.xz | tar -xvf -
+      #     rm -f llvm-mingw-20241015-msvcrt-ubuntu-20.04-x86_64.tar.xz
+      #     cd llvm-mingw-20241015-msvcrt-ubuntu-20.04-x86_64
+      #     echo "MINGW_PREFIX=$(pwd)" >> $GITHUB_ENV
+      #     echo "$(pwd)/bin" >> $GITHUB_PATH
 
       - name: Prepare ANGLE source
         shell: bash
         run: |
           ./update_angle.sh
 
-      - name: Build ANGLE (Native env)
-        if: ${{ matrix.mingw != 'yes' }}
-        run: |
-          scons platform=${{ matrix.platform }} ${{ matrix.flags }} optimize=speed
-
-      - name: Build ANGLE (MSYS2 env)
-        if: ${{ matrix.mingw == 'yes' }}
-        shell: msys2 {0}
+      - name: Build ANGLE
         run: |
           scons platform=${{ matrix.platform }} ${{ matrix.flags }} optimize=speed
 
